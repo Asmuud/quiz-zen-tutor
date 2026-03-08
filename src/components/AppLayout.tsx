@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, MessageCircle, Brain, BookOpen, TrendingUp, Menu, X, LogOut, User } from "lucide-react";
+import { Home, MessageCircle, Brain, BookOpen, TrendingUp, Menu, X, LogOut, User, Settings } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
