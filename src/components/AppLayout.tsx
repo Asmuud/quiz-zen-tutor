@@ -121,7 +121,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t bg-card px-4 py-6 text-center text-sm text-muted-foreground md:block hidden">
+      <footer className="border-t bg-card px-4 py-6 text-center text-sm text-muted-foreground pb-20 md:pb-6">
         <p>&copy; {new Date().getFullYear()} AsmudEmpire. All rights reserved.</p>
         <p className="mt-1">
           Contact: <a href="tel:08149659720" className="text-primary hover:underline">08149659720</a> | <a href="mailto:mudassirsalihu20@gmail.com" className="text-primary hover:underline">mudassirsalihu20@gmail.com</a>
