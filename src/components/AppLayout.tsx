@@ -50,10 +50,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="hidden md:flex items-center gap-2">
           {user ? (
             <>
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
+              <Link
+                to="/profile"
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-muted"
+              >
                 <User className="w-4 h-4" />
                 {displayName || user.email?.split("@")[0]}
-              </span>
+              </Link>
               <button
                 onClick={signOut}
                 className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-muted"
