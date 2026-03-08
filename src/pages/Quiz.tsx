@@ -74,7 +74,7 @@ const Quiz = () => {
     if (currentQ + 1 >= questions.length) {
       setFinished(true);
       if (selectedSubject) {
-        recordQuiz(score + (selected === question.correct ? 0 : 0), questions.length, selectedSubject);
+        recordQuiz(score, questions.length, selectedSubject);
       }
     } else {
       setCurrentQ((q) => q + 1);
