@@ -2,7 +2,10 @@ import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, RotateCcw, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { recordQuiz } from "@/lib/progress-store";
 
 type Subject = "Mathematics" | "English" | "Biology" | "Government";
 
@@ -10,38 +13,8 @@ interface Question {
   question: string;
   options: string[];
   correct: number;
+  explanation: string;
 }
-
-const quizBank: Record<Subject, Question[]> = {
-  Mathematics: [
-    { question: "What is the value of x in 2x + 6 = 14?", options: ["2", "4", "6", "8"], correct: 1 },
-    { question: "What is the area of a circle with radius 7? (π ≈ 22/7)", options: ["154 sq units", "44 sq units", "22 sq units", "49 sq units"], correct: 0 },
-    { question: "Simplify: 3² + 4²", options: ["7", "12", "25", "49"], correct: 2 },
-    { question: "What is 15% of 200?", options: ["15", "30", "25", "35"], correct: 1 },
-    { question: "Find the LCM of 4 and 6", options: ["24", "12", "6", "2"], correct: 1 },
-  ],
-  English: [
-    { question: "Which is a correct sentence?", options: ["He go to school", "He goes to school", "He going to school", "He gone to school"], correct: 1 },
-    { question: "What is a synonym for 'happy'?", options: ["Sad", "Angry", "Joyful", "Tired"], correct: 2 },
-    { question: "Identify the noun: 'The cat sat on the mat'", options: ["sat", "on", "the", "cat"], correct: 3 },
-    { question: "What figure of speech is: 'The wind whispered'?", options: ["Simile", "Metaphor", "Personification", "Hyperbole"], correct: 2 },
-    { question: "Which is the past tense of 'run'?", options: ["Ran", "Runned", "Running", "Runs"], correct: 0 },
-  ],
-  Biology: [
-    { question: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Golgi body"], correct: 2 },
-    { question: "Which blood cells fight infection?", options: ["Red blood cells", "Platelets", "White blood cells", "Plasma"], correct: 2 },
-    { question: "What is the process by which plants make food?", options: ["Respiration", "Photosynthesis", "Osmosis", "Diffusion"], correct: 1 },
-    { question: "DNA stands for:", options: ["Deoxyribonucleic Acid", "Dinitro Acid", "Deoxyribo Nucleic Atom", "None of the above"], correct: 0 },
-    { question: "Which organ pumps blood in the human body?", options: ["Liver", "Kidney", "Heart", "Lungs"], correct: 2 },
-  ],
-  Government: [
-    { question: "Which arm of government makes laws?", options: ["Executive", "Legislature", "Judiciary", "Military"], correct: 1 },
-    { question: "What is the supreme law of a country?", options: ["Decree", "Constitution", "Manifesto", "Policy"], correct: 1 },
-    { question: "Who is the head of the judiciary?", options: ["President", "Speaker", "Chief Justice", "Governor"], correct: 2 },
-    { question: "What type of government is ruled by the people?", options: ["Monarchy", "Oligarchy", "Democracy", "Autocracy"], correct: 2 },
-    { question: "Separation of powers was proposed by:", options: ["John Locke", "Montesquieu", "Aristotle", "Plato"], correct: 1 },
-  ],
-};
 
 const subjects: { name: Subject; icon: string; color: string }[] = [
   { name: "Mathematics", icon: "📐", color: "bg-subject-math" },
@@ -52,22 +25,42 @@ const subjects: { name: Subject; icon: string; color: string }[] = [
 
 const Quiz = () => {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const startQuiz = (subject: Subject) => {
+  const startQuiz = async (subject: Subject) => {
     setSelectedSubject(subject);
     setCurrentQ(0);
     setSelected(null);
     setScore(0);
     setAnswered(false);
     setFinished(false);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-quiz", {
+        body: { subject },
+      });
+
+      if (error) throw error;
+      if (data?.questions && data.questions.length > 0) {
+        setQuestions(data.questions);
+      } else {
+        throw new Error("No questions generated");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate quiz. Please try again.");
+      setSelectedSubject(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const questions = selectedSubject ? quizBank[selectedSubject] : [];
   const question = questions[currentQ];
 
   const handleAnswer = (index: number) => {
@@ -80,6 +73,9 @@ const Quiz = () => {
   const next = () => {
     if (currentQ + 1 >= questions.length) {
       setFinished(true);
+      if (selectedSubject) {
+        recordQuiz(score + (selected === question.correct ? 0 : 0), questions.length, selectedSubject);
+      }
     } else {
       setCurrentQ((q) => q + 1);
       setSelected(null);
@@ -91,8 +87,10 @@ const Quiz = () => {
     return (
       <AppLayout>
         <div className="max-w-2xl mx-auto px-4 py-8 pb-20 sm:pb-8">
-          <h1 className="text-2xl font-bold font-display mb-2">Quiz Generator</h1>
-          <p className="text-muted-foreground mb-6">Select a subject to test your knowledge</p>
+          <h1 className="text-2xl font-bold font-display mb-2">Practice Quiz</h1>
+          <p className="text-muted-foreground mb-6">
+            Select a subject to generate AI-powered exam-style questions for WAEC/NECO preparation.
+          </p>
           <div className="grid grid-cols-2 gap-3">
             {subjects.map((s) => (
               <button
@@ -102,10 +100,22 @@ const Quiz = () => {
               >
                 <span className="text-3xl block mb-2">{s.icon}</span>
                 <span className="font-display font-bold text-lg">{s.name}</span>
-                <span className="block text-sm opacity-80 mt-1">{quizBank[s.name].length} questions</span>
+                <span className="block text-sm opacity-80 mt-1">5 AI questions</span>
               </button>
             ))}
           </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="max-w-md mx-auto px-4 py-20 text-center">
+          <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+          <p className="font-display font-semibold text-lg">Generating {selectedSubject} Questions...</p>
+          <p className="text-sm text-muted-foreground mt-2">Our AI is creating exam-style questions for you</p>
         </div>
       </AppLayout>
     );
@@ -120,10 +130,12 @@ const Quiz = () => {
           <h2 className="text-2xl font-bold font-display mb-2">Quiz Complete!</h2>
           <p className="text-muted-foreground mb-4">{selectedSubject}</p>
           <div className="text-5xl font-bold font-display text-primary mb-2">{percentage}%</div>
-          <p className="text-muted-foreground mb-6">{score} out of {questions.length} correct</p>
+          <p className="text-muted-foreground mb-6">
+            {score} out of {questions.length} correct
+          </p>
           <div className="flex gap-3 justify-center">
             <Button onClick={() => startQuiz(selectedSubject)} className="gap-2">
-              <RotateCcw className="w-4 h-4" /> Retry
+              <RotateCcw className="w-4 h-4" /> Try New Questions
             </Button>
             <Button variant="outline" onClick={() => setSelectedSubject(null)}>
               Other Subjects
@@ -133,6 +145,8 @@ const Quiz = () => {
       </AppLayout>
     );
   }
+
+  if (!question) return null;
 
   return (
     <AppLayout>
@@ -161,7 +175,7 @@ const Quiz = () => {
         </Card>
 
         {/* Options */}
-        <div className="space-y-2 mb-6">
+        <div className="space-y-2 mb-4">
           {question.options.map((opt, i) => {
             let optionStyle = "bg-card border hover:bg-muted cursor-pointer";
             if (answered) {
@@ -186,6 +200,16 @@ const Quiz = () => {
             );
           })}
         </div>
+
+        {/* Explanation */}
+        {answered && question.explanation && (
+          <Card className="border-none shadow-sm bg-primary/5 mb-4">
+            <CardContent className="p-4">
+              <p className="text-sm font-medium text-primary mb-1">Explanation:</p>
+              <p className="text-sm text-muted-foreground">{question.explanation}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {answered && (
           <Button onClick={next} className="w-full">
