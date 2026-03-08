@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, MessageCircle, Brain, BookOpen, TrendingUp, Menu, X } from "lucide-react";
+import { Home, MessageCircle, Brain, BookOpen, TrendingUp, Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
@@ -13,10 +14,10 @@ const navItems = [
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, displayName, signOut } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <header className="border-b bg-card px-4 py-3 flex items-center justify-between sticky top-0 z-50">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
@@ -24,8 +25,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
           <span className="font-display text-lg font-bold text-foreground">SmartStudy AI</span>
         </Link>
-        
-        {/* Desktop nav */}
+
         <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -47,7 +47,27 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           })}
         </nav>
 
-        {/* Mobile menu button */}
+        <div className="hidden md:flex items-center gap-2">
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <User className="w-4 h-4" />
+                {displayName || user.email?.split("@")[0]}
+              </span>
+              <button
+                onClick={signOut}
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-muted"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <Link to="/auth" className="text-sm font-medium text-primary hover:underline">
+              Sign In
+            </Link>
+          )}
+        </div>
+
         <button
           className="md:hidden p-2 rounded-lg hover:bg-muted"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -56,7 +76,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </button>
       </header>
 
-      {/* Mobile dropdown menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-card border-b px-4 py-2 z-40">
           {navItems.map((item) => {
@@ -76,13 +95,29 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               </Link>
             );
           })}
+          {user ? (
+            <button
+              onClick={() => { signOut(); setMobileMenuOpen(false); }}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted w-full"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-primary"
+            >
+              <User className="w-5 h-5" />
+              Sign In
+            </Link>
+          )}
         </div>
       )}
 
-      {/* Main content */}
       <main className="flex-1">{children}</main>
 
-      {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t flex justify-around py-2 z-50">
         {navItems.slice(0, 4).map((item) => {
           const Icon = item.icon;

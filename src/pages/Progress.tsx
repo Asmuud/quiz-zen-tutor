@@ -1,10 +1,30 @@
+import { useState, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, CheckCircle, BookOpen, Trophy } from "lucide-react";
-import { getProgress } from "@/lib/progress-store";
+import { Brain, CheckCircle, BookOpen, Trophy, Loader2 } from "lucide-react";
+import { getProgress, type ProgressData } from "@/lib/progress-store";
 
 const Progress = () => {
-  const progress = getProgress();
+  const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProgress().then((data) => {
+      setProgress(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading || !progress) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   const avgScore = progress.totalQuestions > 0
     ? Math.round((progress.correctAnswers / progress.totalQuestions) * 100)
     : 0;
@@ -22,7 +42,6 @@ const Progress = () => {
         <h1 className="text-2xl font-bold font-display mb-2">Student Progress</h1>
         <p className="text-muted-foreground mb-6">Track your learning journey and stay motivated!</p>
 
-        {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -40,7 +59,6 @@ const Progress = () => {
           })}
         </div>
 
-        {/* Topics studied */}
         {progress.topicsStudied.length > 0 && (
           <Card className="border-none shadow-sm mb-6">
             <CardContent className="p-5">
@@ -56,7 +74,6 @@ const Progress = () => {
           </Card>
         )}
 
-        {/* Motivational message */}
         <Card className="border-none shadow-sm bg-primary/5">
           <CardContent className="p-6 text-center">
             <span className="text-4xl block mb-3">💪</span>

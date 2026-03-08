@@ -1,45 +1,76 @@
-// Simple localStorage-based progress tracking
+import { supabase } from "@/integrations/supabase/client";
+
 export interface ProgressData {
   quizzesTaken: number;
   correctAnswers: number;
   totalQuestions: number;
   topicsStudied: string[];
-  lastActive: string;
 }
 
-const STORAGE_KEY = "smartstudy-progress";
+export async function getProgress(): Promise<ProgressData> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { quizzesTaken: 0, correctAnswers: 0, totalQuestions: 0, topicsStudied: [] };
 
-export function getProgress(): ProgressData {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {}
+  const { data } = await supabase
+    .from("student_progress")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!data) return { quizzesTaken: 0, correctAnswers: 0, totalQuestions: 0, topicsStudied: [] };
+
   return {
-    quizzesTaken: 0,
-    correctAnswers: 0,
-    totalQuestions: 0,
-    topicsStudied: [],
-    lastActive: new Date().toISOString(),
+    quizzesTaken: data.quizzes_taken,
+    correctAnswers: data.correct_answers,
+    totalQuestions: data.total_questions,
+    topicsStudied: data.topics_studied || [],
   };
 }
 
-export function saveProgress(data: ProgressData) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...data, lastActive: new Date().toISOString() }));
+export async function recordQuiz(correct: number, total: number, subject: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: existing } = await supabase
+    .from("student_progress")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  if (existing) {
+    const topics = existing.topics_studied || [];
+    if (!topics.includes(subject)) topics.push(subject);
+
+    await supabase
+      .from("student_progress")
+      .update({
+        quizzes_taken: existing.quizzes_taken + 1,
+        correct_answers: existing.correct_answers + correct,
+        total_questions: existing.total_questions + total,
+        topics_studied: topics,
+      })
+      .eq("user_id", user.id);
+  }
 }
 
-export function recordQuiz(correct: number, total: number, subject: string) {
-  const p = getProgress();
-  p.quizzesTaken += 1;
-  p.correctAnswers += correct;
-  p.totalQuestions += total;
-  if (!p.topicsStudied.includes(subject)) p.topicsStudied.push(subject);
-  saveProgress(p);
-}
+export async function recordTopic(topic: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-export function recordTopic(topic: string) {
-  const p = getProgress();
-  if (!p.topicsStudied.includes(topic)) {
-    p.topicsStudied.push(topic);
-    saveProgress(p);
+  const { data: existing } = await supabase
+    .from("student_progress")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  if (existing) {
+    const topics = existing.topics_studied || [];
+    if (!topics.includes(topic)) {
+      topics.push(topic);
+      await supabase
+        .from("student_progress")
+        .update({ topics_studied: topics })
+        .eq("user_id", user.id);
+    }
   }
 }
