@@ -121,6 +121,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
       <main className="flex-1">{children}</main>
 
+      <footer className="border-t bg-card px-4 py-6 text-center text-sm text-muted-foreground md:block hidden">
+        <p>&copy; {new Date().getFullYear()} AsmudEmpire. All rights reserved.</p>
+        <p className="mt-1">
+          Contact: <a href="tel:08149659720" className="text-primary hover:underline">08149659720</a> | <a href="mailto:mudassirsalihu20@gmail.com" className="text-primary hover:underline">mudassirsalihu20@gmail.com</a>
+        </p>
+      </footer>
+
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t flex justify-around py-2 z-50">
         {navItems.slice(0, 4).map((item) => {
           const Icon = item.icon;
