@@ -1,26 +1,32 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookOpen, MessageCircle, Brain, LayoutDashboard } from "lucide-react";
+import { Home, MessageCircle, Brain, BookOpen, TrendingUp, Menu, X } from "lucide-react";
+import { useState } from "react";
 
 const navItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/chat", label: "AI Tutor", icon: MessageCircle },
-  { path: "/quiz", label: "Quiz", icon: Brain },
+  { path: "/", label: "Home", icon: Home },
+  { path: "/chat", label: "Ask AI Tutor", icon: MessageCircle },
+  { path: "/quiz", label: "Practice Quiz", icon: Brain },
+  { path: "/notes", label: "Study Notes", icon: BookOpen },
+  { path: "/progress", label: "Student Progress", icon: TrendingUp },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b bg-card px-4 py-3 flex items-center justify-between sticky top-0 z-50">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-primary-foreground" />
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-display text-lg font-bold text-foreground">SmartStudy AI</span>
         </Link>
-        <nav className="hidden sm:flex items-center gap-1">
+        
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -40,29 +46,69 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             );
           })}
         </nav>
+
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden p-2 rounded-lg hover:bg-muted"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </header>
+
+      {/* Mobile dropdown menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-card border-b px-4 py-2 z-40">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {/* Main content */}
       <main className="flex-1">{children}</main>
 
       {/* Mobile bottom nav */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-card border-t flex justify-around py-2 z-50">
-        {navItems.map((item) => {
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t flex justify-around py-2 z-50">
+        {navItems.slice(0, 4).map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center gap-1 px-3 py-1 text-xs font-medium transition-colors ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium transition-colors ${
                 isActive ? "text-primary" : "text-muted-foreground"
               }`}
             >
               <Icon className="w-5 h-5" />
-              {item.label}
+              {item.label.split(" ").pop()}
             </Link>
           );
         })}
+        <Link
+          to="/progress"
+          className={`flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium transition-colors ${
+            location.pathname === "/progress" ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          <TrendingUp className="w-5 h-5" />
+          Progress
+        </Link>
       </nav>
     </div>
   );
