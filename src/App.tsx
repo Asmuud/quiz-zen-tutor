@@ -11,6 +11,7 @@ import StudyNotes from "./pages/StudyNotes";
 import Progress from "./pages/Progress";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
