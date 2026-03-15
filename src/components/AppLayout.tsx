@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, MessageCircle, Brain, BookOpen, TrendingUp, Menu, X, LogOut, User, Settings } from "lucide-react";
+import { Home, MessageCircle, Brain, BookOpen, TrendingUp, Menu, X, LogOut, User } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -14,7 +15,7 @@ const navItems = [
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, displayName, signOut } = useAuth();
+  const { user, displayName, avatarUrl, signOut } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -52,9 +53,14 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <>
               <Link
                 to="/profile"
-                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-muted"
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-muted"
               >
-                <User className="w-4 h-4" />
+                <Avatar className="w-6 h-6">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile" />}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                    {(displayName || user.email?.split("@")[0] || "U")[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 {displayName || user.email?.split("@")[0]}
               </Link>
               <button

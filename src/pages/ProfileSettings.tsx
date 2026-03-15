@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
@@ -7,22 +7,71 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Lock, Loader2, Save } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { User, Mail, Lock, Loader2, Save, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfileSettings = () => {
-  const { user, displayName: contextDisplayName } = useAuth();
+  const { user, displayName: contextDisplayName, avatarUrl: contextAvatarUrl, refreshProfile } = useAuth();
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     setDisplayName(contextDisplayName || "");
-  }, [contextDisplayName]);
+    setAvatarUrl(contextAvatarUrl || "");
+  }, [contextDisplayName, contextAvatarUrl]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2MB");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      const urlWithCache = `${publicUrl}?t=${Date.now()}`;
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: urlWithCache })
+        .eq("user_id", user.id);
+      if (updateError) throw updateError;
+
+      setAvatarUrl(urlWithCache);
+      await refreshProfile();
+      toast.success("Profile photo updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload image");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +83,7 @@ const ProfileSettings = () => {
         .update({ display_name: displayName.trim() })
         .eq("user_id", user.id);
       if (error) throw error;
+      await refreshProfile();
       toast.success("Display name updated!");
     } catch (err: any) {
       toast.error(err.message || "Failed to update name");
@@ -57,7 +107,6 @@ const ProfileSettings = () => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success("Password updated successfully!");
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
@@ -68,6 +117,12 @@ const ProfileSettings = () => {
   };
 
   const isOAuthUser = user?.app_metadata?.provider !== "email";
+  const initials = (displayName || user?.email?.split("@")[0] || "U")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <AppLayout>
@@ -78,6 +133,47 @@ const ProfileSettings = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Avatar & Name Header */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative group">
+                  <Avatar className="w-24 h-24 text-2xl">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile" />}
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-white" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                </div>
+                <div className="text-center">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {displayName || user?.email?.split("@")[0]}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Profile Info */}
           <Card>
             <CardHeader>
@@ -118,7 +214,7 @@ const ProfileSettings = () => {
             </CardContent>
           </Card>
 
-          {/* Change Password — only for email/password users */}
+          {/* Change Password */}
           {!isOAuthUser && (
             <Card>
               <CardHeader>
@@ -165,7 +261,7 @@ const ProfileSettings = () => {
 
           <Separator />
 
-          {/* Danger Zone */}
+          {/* Sign Out */}
           <Card className="border-destructive/30">
             <CardHeader>
               <CardTitle className="text-lg text-destructive">Sign Out</CardTitle>
