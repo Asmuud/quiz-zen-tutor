@@ -124,7 +124,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <footer className="border-t bg-card px-4 py-6 text-center text-sm text-muted-foreground pb-20 md:pb-6">
         <p>&copy; {new Date().getFullYear()} AsmudEmpire. All rights reserved.</p>
         <p className="mt-1">
-          Contact: <a href="tel:08149659720" className="text-primary hover:underline">08149659720</a> | <a href="mailto:mudassirsalihu20@gmail.com" className="text-primary hover:underline">mudassirsalihu20@gmail.com</a>
+          Contact: <a href="tel:09033267999" className="text-primary hover:underline">09033267999</a> | <a href="mailto:abdulghonniy@gmail.com" className="text-primary hover:underline">abdulghonniy@gmail.com</a>
         </p>
       </footer>
 
