@@ -105,13 +105,25 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             );
           })}
           {user ? (
-            <button
-              onClick={() => { signOut(); setMobileMenuOpen(false); }}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted w-full"
-            >
-              <LogOut className="w-5 h-5" />
-              Sign Out
-            </button>
+            <>
+              <Link
+                to="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === "/profile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <User className="w-5 h-5" />
+                Profile Settings
+              </Link>
+              <button
+                onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted w-full"
+              >
+                <LogOut className="w-5 h-5" />
+                Sign Out
+              </button>
+            </>
           ) : (
             <Link
               to="/auth"
