@@ -53,9 +53,14 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <>
               <Link
                 to="/profile"
-                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-muted"
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-muted"
               >
-                <User className="w-4 h-4" />
+                <Avatar className="w-6 h-6">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile" />}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                    {(displayName || user.email?.split("@")[0] || "U")[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 {displayName || user.email?.split("@")[0]}
               </Link>
               <button
