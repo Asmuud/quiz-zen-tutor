@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 const Auth = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +32,7 @@ const Auth = () => {
       } else if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Welcome back!");
+        navigate("/welcome", { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -42,6 +44,7 @@ const Auth = () => {
         });
         if (error) throw error;
         toast.success("Account created! Check your email to confirm.");
+        navigate("/welcome", { replace: true });
       }
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
