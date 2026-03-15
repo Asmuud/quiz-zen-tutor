@@ -32,7 +32,7 @@ const Auth = () => {
       } else if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Welcome back!");
+        navigate("/welcome", { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
