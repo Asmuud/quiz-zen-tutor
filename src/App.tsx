@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import HomePage from "./pages/HomePage";
 import ChatTutor from "./pages/ChatTutor";
+import Welcome from "./pages/Welcome";
 import Quiz from "./pages/Quiz";
 import StudyNotes from "./pages/StudyNotes";
 import Progress from "./pages/Progress";
