@@ -136,9 +136,9 @@ var mcp_default = defineMcp({
   instructions: "Tools for Smart Study Pal, an AI study app for Nigerian secondary school students. Use `get_profile` and `get_progress` to view the signed-in student's profile and learning progress (quizzes taken, correct answers, topics studied).",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
-    acceptedAudiences: "authenticated"
+    acceptedAudiences: "authenticated",
+    requireOAuthClientClaim: true
   }),
-  requireOAuthClientClaim: true,
   tools: [get_profile_default, get_progress_default]
 });
 
