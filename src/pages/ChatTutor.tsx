@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Send, Bot, User } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import FormattedAnswer from "@/components/FormattedAnswer";
 import { streamChat, type Msg } from "@/lib/stream-chat";
 import { toast } from "sonner";
 
@@ -131,9 +131,7 @@ const ChatTutor = () => {
                 }`}
               >
                 {msg.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
+                  <FormattedAnswer content={msg.content} />
                 ) : (
                   msg.content
                 )}
