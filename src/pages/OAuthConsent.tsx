@@ -34,7 +34,9 @@ const OAuthConsent = () => {
         return;
       }
       setEmail(sess.session.user.email ?? null);
-      const { data, error } = await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
+      const res = await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
+      const data = res.data as AuthDetails | null;
+      const error = res.error;
       if (!active) return;
       if (error) {
         setError(error.message);
@@ -54,9 +56,11 @@ const OAuthConsent = () => {
 
   async function decide(approve: boolean) {
     setBusy(true);
-    const { data, error } = approve
+    const res = approve
       ? await supabase.auth.oauth.approveAuthorization(authorizationId)
       : await supabase.auth.oauth.denyAuthorization(authorizationId);
+    const data = res.data as AuthDetails | null;
+    const error = res.error;
     if (error) {
       setBusy(false);
       setError(error.message);

@@ -3,10 +3,24 @@ import AppLayout from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brain, CheckCircle, BookOpen, Trophy, Loader2 } from "lucide-react";
 import { getProgress, type ProgressData } from "@/lib/progress-store";
+import { useWebMCP } from "use-webmcp-tool";
+import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 
 const Progress = () => {
   const [progress, setProgress] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useWebMCP({
+    name: "get_progress_summary",
+    description: "Read the learning progress currently shown on the Student Progress page.",
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
+    enabled: !loading && !!progress,
+    execute: () =>
+      runWebMCPTool("get_progress_summary", () => {
+        if (!progress) throw new Error("Progress is still loading.");
+        return `${progress.quizzesTaken} quizzes taken, ${progress.correctAnswers}/${progress.totalQuestions} correct. Topics: ${progress.topicsStudied.join(", ") || "none yet"}.`;
+      }),
+  });
 
   useEffect(() => {
     getProgress().then((data) => {

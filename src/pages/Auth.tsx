@@ -11,6 +11,11 @@ import { Link } from "react-router-dom";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rawNext = searchParams.get("next");
+  const nextPath = rawNext ? oauthReturnPath(rawNext) : null;
+  const afterAuthPath = nextPath && nextPath !== "/" ? nextPath : "/welcome";
+  const redirectUrl = nextPath && nextPath !== "/" ? new URL(nextPath, window.location.origin).href : window.location.origin;
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,19 +38,19 @@ const Auth = () => {
       } else if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/welcome", { replace: true });
+        navigate(afterAuthPath, { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { display_name: displayName || email.split("@")[0] },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: redirectUrl,
           },
         });
         if (error) throw error;
         toast.success("Account created! Check your email to confirm.");
-        navigate("/welcome", { replace: true });
+        navigate(afterAuthPath, { replace: true });
       }
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
@@ -142,7 +147,7 @@ const Auth = () => {
               className="w-full gap-2"
               onClick={async () => {
                 const { error } = await lovable.auth.signInWithOAuth("google", {
-                  redirect_uri: window.location.origin,
+                  redirect_uri: redirectUrl,
                 });
                 if (error) toast.error(error.message || "Google sign-in failed");
               }}
@@ -162,7 +167,7 @@ const Auth = () => {
               className="w-full gap-2"
               onClick={async () => {
                 const { error } = await lovable.auth.signInWithOAuth("apple", {
-                  redirect_uri: window.location.origin,
+                  redirect_uri: redirectUrl,
                 });
                 if (error) toast.error(error.message || "Apple sign-in failed");
               }}
