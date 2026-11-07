@@ -3,7 +3,7 @@ import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Loader2, Sparkles } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import FormattedAnswer from "@/components/FormattedAnswer";
 import { streamChat } from "@/lib/stream-chat";
 import { recordTopic } from "@/lib/progress-store";
 import { toast } from "sonner";
@@ -112,9 +112,7 @@ const StudyNotes = () => {
                   {subject}: {topic}
                 </h3>
               </div>
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <ReactMarkdown>{notes}</ReactMarkdown>
-              </div>
+              <FormattedAnswer content={notes} />
             </CardContent>
           </Card>
         )}
